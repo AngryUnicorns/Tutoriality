@@ -6,7 +6,10 @@ module.exports = function(body) {
 	return m('.main', [
 		navSubView(),
 		Notification.isShown() ? notificationSubView() : null,
-		body,
+		m('.container',[
+			m('.col-sm-12 .col-md-6 .col-md-offset-3',[
+				body]),
+		]),
 	]);
 }
 
@@ -30,25 +33,37 @@ var closeButton = function() {
 	]);
 }
 
-
+var signIn = function() {
+  User.signIn().then(function(response){
+    m.route("/");
+  });
+}
 
 var navSubView = function() {
-	return m('nav.navbar.navbar-default', [
+	return m('nav.navbar-default', [
 		m('div.container-fluid', [
 			m('div.navbar-header', [
 				m('a.navbar-brand[href="/"]', {config: m.route}, 'Tutoriality')
 			]),
-			m('ul.nav.nav-pills.navbar-right', [
+			m('ul.nav.nav-pills.navbar-right', [        
 				m('li[role=presentation].active', [
-					m('a[href="/create"]', {config: m.route}, 'Create')
+          User.getInfo() ? m('a[href="/create"]', {config: m.route}, 'Create') : ''
 				]),
+        m('li[role=presentation].active', [
+          User.getInfo() ? m('a[href="/profile"]', {config: m.route}, 'Profile') : ''
+        ]),
 				m('li[role=presentation].active', [
-					m('a[href="/"]', {onclick : function(event){
+					User.getInfo() ? m('a[href="/"]', {onclick : function(event){
 						event.preventDefault();
 						User.signOut().then(function(){
-							m.route('/sign-in');
+							m.route('/');
 						});
-					}}, 'Sign Out')
+					}}, 'Sign Out') :
+          m('a[href="/"]', {onclick : function(event) {
+              event.preventDefault();
+              signIn();
+            }
+          }, [ m('i.fa.fa-github-alt'), " Sign in with Github"])
 				])
 			])
 		]),

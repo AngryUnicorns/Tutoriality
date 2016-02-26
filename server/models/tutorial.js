@@ -1,4 +1,5 @@
 var db = require('../lib/db.js')
+var user = require('./user');
 var Tutorial = {};
 module.exports = Tutorial;
 
@@ -7,12 +8,15 @@ var collection = function() {
 }
 
 Tutorial.insert = function(tutorial) {
+  tutorial.created_by = db.getMongoID(tutorial.created_by)
 	return collection().insert(tutorial);
 }
 
 Tutorial.find = function(query) {
-	var query = query || {};
-	// the id can be undefined
+  if(query.created_by){
+    query.created_by = db.getMongoID(query.created_by);
+  }
+  // the id can be undefined
 	return collection().find(query);
 }
 
@@ -26,4 +30,8 @@ Tutorial.update = function(query, updateFields) {
 
 Tutorial.updateByID = function(id, updateFields) {
 	return Tutorial.update({_id : db.getMongoID(id)}, updateFields);
+}
+
+Tutorial.delete = function(id) {
+  return collection().remove({_id : db.getMongoID(id)}, 1);
 }

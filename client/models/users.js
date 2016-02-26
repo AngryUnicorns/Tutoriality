@@ -2,17 +2,30 @@ var m = require('mithril');
 
 var OAuth = require('../lib/oauth.min.js').OAuth;
 var OAuthUser = require('../lib/oauth.min.js').User;
+var config = require('../../server/lib/config');
 
-OAuth.initialize('t2PEPMuehspsbZXlrrx9Xr2SWMg');
-
+OAuth.initialize(config.credentials.oauth.key);
 var User = module.exports;
 
 User.signIn = function() {
 	//.popup is what triggers popup that allows to sign into github
 	return OAuth.popup('github').then(function(res){
 		//when popup is successfully signed in, OAuthUser actually signs into the app
-		return OAuthUser.signin(res);
-	}).fail(function(error){
+    console.log("the res", res)
+    return OAuthUser.signin(res)
+	}).then(function(user){
+    return m.request({method : 'POST', url : '/api/users', data : user.data})
+    .then(function(user){
+      var ouser = User.getInfo()
+      ouser.data._id = user.value._id
+      ouser.save().done(function() {
+        return user;
+      }).fail(function(err) {
+        throw err;
+      });
+    });
+  })
+  .fail(function(error){
 		console.log(error);
 	})
 }
@@ -39,7 +52,9 @@ User.isUserMatch = function(id) {
 User.confirmLoggedIn = function() {
 	if(!User.isLoggedIn()) {
 		m.route('/sign-in');
-	}
+	} else {
+    return true;
+  }
 }
 //This is an OAuth method that gets the identity of the signed in user
 User.getInfo = function() {
@@ -47,5 +62,13 @@ User.getInfo = function() {
 }
 //calls the get info function and returns the unique token to that user.
 User.getID = function() {
-	return User.getInfo().token;
+	return User.getInfo().data._id;
+}
+
+User.getName = function(){
+	return User.getInfo().data.firstname + ' ' + User.getInfo().data.lastname;
+}
+
+User.getPic = function(){
+	return User.getInfo().data.avatar;
 }

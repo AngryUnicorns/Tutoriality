@@ -1,11 +1,12 @@
 var pmongo = require('promised-mongo');
-var dbName = process.env.NODE_ENV === 'test' ? 'test' : 'local';
+var dbName = process.env.NODE_ENV === 'production' ? process.env.MONGOLAB_URI : 'tutoriality_dev';
 var db = pmongo(dbName);
 var _ = require('underscore');
 
 db.deleteEverything = function () {
   return Promise.all([
     db.collection('tutorials').remove(),
+    db.collection('users').remove()
   ])
 }
 
@@ -23,6 +24,7 @@ db.loadFixtures = function() {
 		})
 	});
 }
+db.collection('users').createIndex( { "alias": 1 }, { unique: true } )
 
 db.getMongoID = function(idString) {
 	return pmongo.ObjectId(idString);

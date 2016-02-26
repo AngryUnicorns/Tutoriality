@@ -6,21 +6,29 @@
 /*body {
 	background-color: beige;
 }*/
-
-legend > h2 {
-	color: 1C5F75;
-	text-align:center;
-	font-size:32px;
-	font-weight: 200;
-	margin: 0 auto;
-	color: #317eac;
+img {
+  max-width: 100%;
 }
 
-legend > p {
-  text-align: center;
+.tutorial-header {
+  text-align: left;
+}
+
+.tutorial-header > h2 {
+	font-size:32px;
+	font-weight: 200;
+	color: #317eac;
+
+}
+
+.tutorial-header > p {
 	margin: 0 auto;
 	font-weight: 200;
-	padding-bottom: 20;
+	padding-bottom: 30px;
+}
+
+.tutorial-header .fa {
+  margin-top: 24px;
 }
 
 div.btn {
@@ -30,20 +38,33 @@ div.btn {
 	/*width:22%;*/
 }
 
+.step-btns {
+  width: 100%;
+}
+
+button.add-step-btn {
+  width: 100%;
+}
+
+button.save-step-btn {
+  float: right;
+}
+
 .content-steps {
-  text-align:left;
-  width: 90%;
-  margin: 0 auto;
-  /*height: 500px;*/
-  background-color: transparent;
-  /*border: 1px solid #eee;*/
+
+  border-top: 3px solid #eee;
+}
+
+hr {
+  border-bottom: 3px solid #eee;
 }
 
 h3 {
 	font-size: 16px;
-	text-decoration: underline;
 }
 
+p.lead {
+}
 .panel-body {
-	text-align: left;
+
 }

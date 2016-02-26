@@ -4,7 +4,8 @@ var Tutorial = require('../models/tutorial.js');
 
 router.get('/tutorials', function(request, response){
 	// run a find a without an id to get all tutorials
-	Tutorial.find().then(function(tutorials){
+  var query = request.query || {}
+	Tutorial.find(query).then(function(tutorials){
 		response.send(tutorials);
 	});
 });
@@ -28,6 +29,13 @@ router.post('/tutorials', function(request, response){
 		response.send(newRecord);
 	});
 });
+
+router.delete('/tutorials/delete/:id', function(request, response){
+  var id = request.params.id;
+  Tutorial.delete(id).then(function(res){
+  	response.send(res);
+  })
+})
 
 module.exports = router;
 

@@ -41,7 +41,6 @@ CreateTutorial.controller = function () {
     //if one was passed in, delete the tutorial by ID, and then update the tutorial in the database with new info
     if(tutorialID) {
       delete tutorial['_id'];
-      console.log(tutorial);
       Tutorial.updateByID(tutorialID, tutorial);
     }
     else {
@@ -52,7 +51,10 @@ CreateTutorial.controller = function () {
 
 //This removes the first step.
   ctrl.removeStep = function (idx) {
-    ctrl.tutorial.steps.splice(0, idx)
+    console.log('all steps: ', ctrl.tutorial.steps);
+    console.log('index:', idx)
+    ctrl.tutorial.steps.splice(idx, 1);
+    console.log('after:', ctrl.tutorial.steps)
   }
 //confirms login:
   User.confirmLoggedIn();
@@ -62,7 +64,7 @@ CreateTutorial.controller = function () {
 //Main Create view composed of all sub views in desired order of appearance
 CreateTutorial.view = function (ctrl, options) {
   //what is going to be included in the create view tutorial
-    var view = m('div', [
+    var view = m('.tutorial-view', [
       createTemplate(ctrl),
       stepHeader(ctrl),
       makeSteps(ctrl),
@@ -77,13 +79,17 @@ CreateTutorial.view = function (ctrl, options) {
 var createTemplate = function(ctrl, options) {
 
   return m('.CreateTutorial', [
-            m('h2', 'Create Tutorial'),
+          m("button.save-step-btn.btn.btn-success.btn-md[type='button']", {
+            //calls the ctrl.save function which updates or creates, and then reroutes back to the main page
+            onclick: function(e) { e.preventDefault(); ctrl.save(ctrl.tutorial); m.route('/'); }
+          }, "Save"),
+          m('h1', 'Create Tutorial'),
           m('div', [
-            m('fieldset', { style:'margin-right: 20%; margin-left: 10px;' }, [
-              m('legend', 'Tutorial Information'),
+            m('fieldset', [
+              // m('legend', 'Tutorial Information'),
                 m('form', 'Title: ', { type: 'text' }, [
                   m('br'),
-                  m('input', {
+                  m('input.form-control', {
                     type: 'text',
                     placeholder: 'Enter Title',
                     style: 'width: 75%;',
@@ -94,7 +100,7 @@ var createTemplate = function(ctrl, options) {
                 ]),
                 m('form', 'Description: ', { type: 'text' }, [
                   m('br'),
-                  m('input', {
+                  m('textarea.form-control', {
                     type: 'text',
                     placeholder: 'Enter Description',
                     style: 'width: 75%;',
@@ -111,69 +117,67 @@ var createTemplate = function(ctrl, options) {
 var stepHeader = function() {
     return m('div', [
             m('br'),
-            m('fieldset', { style: 'margin-right: 33%; margin-left: 10px;'}, [
-              m('legend', 'Step Information'),
+            m('fieldset', [
+              m('legend', 'Create your steps!'),
             ])
           ])
 }
 
 //Make steps sub view:
 var makeSteps = function(ctrl) {
-  return m('.steps', { style: 'margin-left: 10px;'}, [
+  return m('.steps', [
 //maps over objects in steps array and creates input fields for properties in objects
-  ctrl.tutorial.steps.map(function(step, idx){
-    return m('form', 'Description:', { type: 'text',  style: 'margin-right: 40%;' }, [
-            m('br'),
-            m('input', {
-              type: 'text',
-              placeholder: 'Give a short description of step',
-              style: 'width: 75%',
-              value : step.title,
-              onchange: function() { step.title = this.value }
-               }),
-            m('br'),
-            m('br'),
-            m('form', 'Step #' + (idx+1), { type: 'text' }),
-            m('textarea.form-control', {
-              rows:'3',
-              type:'text',
-              placeholder:'Step it out!',
-              style: 'width:75%; height:175px ',
-              value : step.content,
-              onchange: function() { step.content = this.value }
-               }),
-            m('br'),
-           ])
-         })
-       ])
+    ctrl.tutorial.steps.map(function(step, idx){
+      return  m('.panel.panel-default', [
+                m('.panel-heading', [
+                  m('i.fa.fa-trash.pull-right', { onclick: function(e) { e.preventDefault(); ctrl.removeStep(idx) } }),
+                  m('form', 'Step ' + (1 + idx), { type: 'text',  style: 'margin-right: 40%;' }, [
+                    m('br'),
+                  ]),
+                ]),                  
+                  m('.panel-body', [
+                    m('input.form-control', {
+                      type: 'text',
+                      placeholder: 'Give a short description of step',
+                      style: 'width: 75%',
+                      value : step.title,
+                      onchange: function() { step.title = this.value }
+                    }),
+                    m('br'),
+                    m('form', { type: 'text' }),
+                    m('textarea.form-control', {
+                      rows:'3',
+                      type:'text',
+                      placeholder:'Step it out!',
+                      style: 'width:75%; height:175px ',
+                      value : step.content,
+                      onchange: function() { step.content = this.value }
+                    }),
+                    m('br'),
+                  ])
+              ])
+    })
+  ])
 }
 
 
 //add step, delete step, save tutorial buttons
 var buttons = function(ctrl) {
-  return m('div', { style:'margin-left:30%;'}, [
-      m(".btn-group[aria-label='...'][role='group']", [
-        m("button.btn.btn-primary.btn-lrg[type='button']", {
+  return m('.button-container', [
+      m(".step-btns.btn-group[aria-label='...'][role='group']", [
+        m("button.add-step-btn.btn.btn-primary.btn-lg[type='button']", {
           //onclick pushes a new step object into the steps array, the map function maps over it and changes view
           onclick:  function(e) { e.preventDefault(); ctrl.tutorial.steps.push( Tutorial.stepVM() );}
         }, "Add Step"),
-        m("button.btn.btn.btn-primary.btn-lrg[type='button']", {
-          //calls the delete step function
-          onclick: function(e) { e.preventDefault(); ctrl.removeStep(ctrl, this.idx) }
-        }, "Delete Step"),
-        m("button.btn.btn.btn-primary.btn-lrg[type='button']", {
-          //calls the ctrl.save function which updates or creates, and then reroutes back to the main page
-          onclick: function(e) { e.preventDefault(); ctrl.save(ctrl.tutorial); m.route('/'); }
-        }, "Save"),
       ]),
       m('br'),
       m('br'),
     ])
 }
 //Deletes step. should possibly be in model?
-var removeStep = function(ctrl, idx) {
-  if (ctrl.tutorial.steps.length >= 2) {
-    return m('button', { onclick: ctrl.tutorial.removeStep(idx) }, 'Remove Step')
-  }
-}
+// var removeStep = function(ctrl, idx) {
+//   if (ctrl.tutorial.steps.length >= 2) {
+//     return m('button', { onclick: ctrl.tutorial.removeStep(idx) }, 'Remove Step')
+//   }
+// }
 

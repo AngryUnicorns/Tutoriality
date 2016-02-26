@@ -1,0 +1,20 @@
+.panel-title.list-link:hover {
+  color: #72C1EE;
+}
+
+ul.nav a:hover {
+  background-color: #317EAC !important;
+}
+
+.created-by {
+  background-color: #F5F5DC;
+  margin-left: 25px;
+}
+
+.created-by-pic {
+  width: 32px;
+  height: 32px;
+  float: left;
+  margin-right: 20px;
+  border-radius: 50%;
+}

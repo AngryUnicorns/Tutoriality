@@ -4,96 +4,117 @@ var mainLayout     = require('../layouts/main');
 var User           = require('../models/users');
 var _              = require('underscore');
 var Tutorial       = require('../models/tutorials');
-var MarkDownText = require('../components/MarkDownText');
+var MarkDownText   = require('../components/MarkDownText');
 
 
 Read.controller = function () {
   var ctrl = this;
-  console.log('error',ctrl.error)
+  var userId = User.getID();
+
 
   ctrl.id = m.route.param('id');
-  console.log('id',ctrl.id)
   User.confirmLoggedIn();
 
-  ctrl.tutorial = null;;
-  ctrl.listSteps = null
-  // ctrl.userCanEdit = function() {
-  //   return ctrl.tutorial && ctrl.tutorial.created_by &&
-  // }
+  ctrl.tutorial = null;
+  ctrl.listSteps = null;
 
+  ctrl.comments = [{name: 'fuckyou', comment: 'civil discourse on the internet is important', created: 'July 12th, 2015'},
+  {name: 'ice cube', comment: 'chickity check yo self before you wreck yoself', created: 'July 12th, 2016'}];
 
   Tutorial.fetchByID(ctrl.id).then(function(tutorial) {
      ctrl.tutorial = tutorial
+     if(ctrl.tutorial.favorites.indexOf(userId.toString()) === -1){
+       ctrl.faved = false;
+     } else {
+       ctrl.faved = true;
+     }
   })
+
+  ctrl.toggleFavorite = function(tutorial){
+    if(ctrl.tutorial.favorites.indexOf(userId.toString()) === -1){
+      ctrl.tutorial.favorites.push(userId);
+      ctrl.faved = true;
+    } else {
+      console.log("in the slice")
+      ctrl.tutorial.favorites = ctrl.tutorial.favorites.slice(ctrl.tutorial.favorites.indexOf(userId), 0);
+      ctrl.faved = false;
+    }
+    delete tutorial['_id'];
+    console.log(tutorial);
+    Tutorial.updateByID(ctrl.id, ctrl.tutorial).then(function(tutorial) {
+       console.log("FAV TOGGLED!!!");
+    })
+  }
 };
 
+
 Read.view = function (ctrl, options) {
-    var id = 0;
-    var view =  m('.read', [
-                  m('legend', [
-                  m('h2', ctrl.tutorial.title),
-                  m('br'),
-                  m('p', ctrl.tutorial.description),
-                  m('.auth-edit', [
-                  //edit  to creator of tutorial
-                  User.isUserMatch(ctrl.tutorial.created_by) ? [
-                    m('div', editBtn(options, ctrl.tutorial))
-                  ] : null,
-               ])
-             ]),
+    var view =  m('.content-read', [
+                m('.tutorial-header.clearfix', [
+                m('a[href=/#/].pull-right', { onclick: function(e){
+                  e.preventDefault();
+                  ctrl.toggleFavorite(ctrl.tutorial);
+                }}, [ m('i', {class:ctrl.faved ? 'fa fa-star' : 'fa fa-star-o'}, " Favorite") ]),
+                m('h2.tutorial-title', ctrl.tutorial.title),
+                m('img.created-by-pic', {src: User.getPic()}),
+                m('h5.created-by', "Created by " + ctrl.tutorial.created_by),
+                m('.auth-edit', [
+                User.confirmLoggedIn() && User.isUserMatch(ctrl.tutorial.created_by) ? [
+                  m('div', editBtn(options, ctrl.tutorial))
+                ] : null,
+             ])
+        ]),
         m('.content-steps', [
-            ctrl.tutorial.steps.map(function(list) {
-              console.log('content steps', list)
-                id++
-                 return m('.panel-group', { 'aria-multiselectable': 'true', id: 'accordion', role: 'tablist' }, [
-                          m('.panel.panel-default', [
-                            m('.panel-heading', { id: 'heading' + id, role: 'tab' }, [
-                              m('h4.panel-title', [
-                                m('a', { 'aria-controls': 'collapse' + id, 'aria-expanded': 'false', 'data-parent': '#accordion', 'data-toggle': 'collapse', href: '#collapse' + id, role: 'button' }, [
-                                  m('h3', list.title)
-                               ])
-                             ])
-                           ]),
-                        m('.panel-collapse.collapse', { 'aria-labelledby': 'heading' + id, id: 'collapse' + id, role: 'tabpanel' }, [
-                          m('.panel-body', [
-                            m('p', m.component(MarkDownText, list.content))
-                          ])
-                        ])
-                      ])
-               ])
-            })
-        ])
+          m('p.lead', ctrl.tutorial.description),
+          ctrl.tutorial.steps.map(function(list, index) {
+            index = index+1;
+            return m('div', {'aria-multiselectable': 'true'}, [
+              m('h3', list.title),
+              m('.step-container', [
+                m('p', m.component(MarkDownText, list.content))
+              ])
+            ])
+          })
+        ]),
+        m('.comments',{style: {border: "1px solid red"}},[
+          ctrl.comments.map(function(comment){
+            return m('.singleComment',[
+              m('img.created-by-pic',{src: '#', width: '75', height: '75'}),
+              m('p', comment.name),
+              m('p', comment.comment),
+              m('p', comment.created)
+             ])
+          }),
+          //this is the add a comment logic
+          m('img.created-by-pic', { src: User.getPic(), width: '75', height: '75' }),
+          m('p', User.getName()),
+            m('fieldset', [
+                m('form', { type: 'text' }, [
+                  m('br'),
+                  m('textarea.form-control', {
+                    type: 'text',
+                    placeholder: 'Write a comment',
+                    style: 'width: 75%;',
+                    onchange: function(e) { e.preventDefault();
+                      //console.log(this.value);
+                      ctrl.comments.push({name:'Tina Yothers', comment:this.value, created: Date.now()});
+                    }
+                  }),
+                ]),
+                // m("button.btn.btn-success.btn-lrg[type='button']", {
+                //   onclick: function(e) { e.preventDefault(); console.log('iam hte comments'); }
+                // }, "Reply")
+            ]),
+                m("button.btn.btn-success.btn-lrg[type='button']", {
+                  onclick: function(e) {console.log('iam hte comments'); e.preventDefault();}
+                }, "Reply")
+        ]),
     ]);
     return mainLayout(view);
 };
 
 var editBtn = function(options, tutorial) {
-    return m('button.btn', {onclick : function(){
-      m.route('/edit/' + tutorial._id);
-    }}, "Edit")
-    // return m('div.btn', [
-    //     m('button.btn.btn-primary.btn-md', { 'data-target': '#myModal', 'data-toggle': 'modal', type: 'button' }, [
-    //         m('div.edit', 'Edit')
-    //      ]),
-    //     m('.modal.fade', { 'aria-labelledby': 'myModalLabel', id: 'myModal', role: 'dialog', tabcounter: '-1' },  [
-    //         m('.modal-dialog', { role: 'document' }, [
-    //             m('.modal-content', [
-    //                 m('.modal-header', [
-    //                     m('button.close', { 'aria-label': 'Close', 'data-dismiss': 'modal', type: 'button' }, [
-    //                         m('span', { 'aria-hidden': true }, 'x')]),
-    //                     m('h4.modal-title', { id: 'myModalLabel' }, "Edit Tutorial")
-    //                 ]),
-    //                 m('.modal-body', [
-
-    //                     // console.log(document.getElementsByClassName("content-read"))
-    //                     m('textarea', { rows:'3', type:'text', style: 'width:75%; height:175px', value: document.getElementsByClassName(".read").value }) //trying to create edit
-    //                 ]),
-    //                 m('.modal-footer', [
-    //                     m('button.btn.btn-default', { 'data-dismiss': 'modal', type: 'button' }, "Close"),
-    //                     m('button.btn.btn-primary', { type: 'button' }, "Save Changes")
-    //                 ])
-    //             ])
-    //         ])
-    //      ])
-    // ])
+  return m('button.btn', {onclick : function(){
+    m.route('/edit/' + tutorial._id);
+  }}, "Edit");
 }
